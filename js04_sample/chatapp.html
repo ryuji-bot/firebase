@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>chatApp</title>
+  <style>
+    #output li {
+      background: #ccc;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>realtime chat</h1>
+
+  <ul>
+    <li>
+      <label for="name">name</label>
+      <input type="text" id="name">
+    </li>
+    <li>
+      <textarea name="" id="text" cols="30" rows="10"></textarea>
+    </li>
+    <li>
+      <button id="send">send</button>
+    </li>
+  </ul>
+
+
+  <ul id="output"></ul>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/8.6.3/firebase.js"></script>
+
+
+  <script>
+    var firebaseConfig = {
+      apiKey: "",
+      authDomain: "chat-app-a965a.firebaseapp.com",
+      projectId: "chat-app-a965a",
+      storageBucket: "chat-app-a965a.appspot.com",
+      messagingSenderId: "370453902818",
+      appId: "1:370453902818:web:27e3f09e5a98fa93a2b5bb"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore().collection('chat');
+
+
+  </script>
+  <script>
+    // 日時をいい感じの形式にする関数
+    function convertFromFirestoreTimestampToDatetime(timestamp) {
+      const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+      const Y = _d.getFullYear();
+      const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+      const d = _d.getDate().toString().padStart(2, '0');
+      const H = _d.getHours().toString().padStart(2, '0');
+      const i = _d.getMinutes().toString().padStart(2, '0');
+      const s = _d.getSeconds().toString().padStart(2, '0');
+      return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+    $('#send').on('click', function () {
+      const date = {
+        name: $('#name').val(),
+        text: $('#text').val(),
+        time: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      // console.log(date);
+      db.add(date);
+      $('#text').val('');
+    });
+
+    db.orderBy('time', 'desc').onSnapshot(function (querySnapshot) {
+      const dataArray = [];
+      querySnapshot.docs.forEach(function (doc) {
+        const date = {
+          id: doc.id,
+          data: doc.data(),
+        };
+        dataArray.push(data);
+      });
+      console.log(dataArray);
+
+      const tagArray = [];
+      dataArray.forEach(function (data) {
+        const tag = `
+          <li id=${data.id}>
+          <p>${data.data.name}</p>
+          <p>${data.data.text}</p>
+          <p>${data.data.time.seconds}</p>
+          </li>
+          `;
+      })
+      $('#output').html(tagArray);
+    });
+
+
+
+
+
+  </script>
+</body>
+
+</html>
